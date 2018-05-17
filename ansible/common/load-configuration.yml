@@ -1,0 +1,10 @@
+- name: Include vars of client.
+  include_vars:
+    dir: "{{config_dir}}"
+    extensions: 
+    - yml
+    name: client_params
+- set_fact:
+    proxy_env: "{{client_params.proxy_env}}"
+  when: client_params.proxy_env is defined
+    

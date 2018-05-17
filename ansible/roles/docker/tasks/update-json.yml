@@ -1,0 +1,38 @@
+##### Update configuration
+- set_fact:
+    docker_daemon_update: "{{docker_daemon_new_config | mandatory}}"
+- name: Create docker directories
+  become: yes
+  file: path="{{item}}" state=directory mode=0755
+  with_items:
+    - /etc/docker
+- name: Check docker configuration
+  become: yes
+  stat:
+    path: /etc/docker/daemon.json
+  register: docker_config_file
+- name: Read docker configuration file
+  become: yes
+  slurp:
+    src: /etc/docker/daemon.json
+  register: docker_config_encode
+  when: docker_config_file.stat.exists == True
+  
+- set_fact:
+    docker_config: "{{docker_config_encode['content'] | b64decode| from_json}}"
+  when: docker_config_file.stat.exists == True
+
+- set_fact:
+    result: "{{docker_config|combine(docker_daemon_update, recursive=True)}}"
+  when: docker_config_file.stat.exists == True
+
+- set_fact:
+    result: "{{docker_daemon_update}}"
+  when: docker_config_file.stat.exists == False
+
+- name: Copy daemon.json to remote directory
+  become: yes
+  copy:
+    content: "{{result | to_nice_json }}"
+    dest: /etc/docker/daemon.json
+    
