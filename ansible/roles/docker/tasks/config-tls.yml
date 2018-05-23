@@ -63,7 +63,7 @@
   copy:
     content: |
       extendedKeyUsage = clientAuth,serverAuth
-      subjectAltName = DNS:localhost,IP:{{ ec2_private_ip_address }},IP:127.0.0.1,IP:{{ ec2_ip_address }}
+      subjectAltName = DNS:localhost,IP:{{ private_ip }},IP:127.0.0.1,IP:{{ public_ip }}
     dest: "{{remote_ca_path}}/server-extfile.cnf"
     force: no
 - name: Create Server certificate

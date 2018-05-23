@@ -1,4 +1,4 @@
-- name: Include vars of client.
+- name: Include vars of client
   include_vars:
     dir: "{{config_dir}}"
     extensions: 
@@ -7,4 +7,6 @@
 - set_fact:
     proxy_env: "{{client_params.proxy_env}}"
   when: client_params.proxy_env is defined
-    
+- name: Add AWS inventory variables
+  include_tasks: map-aws.yml
+  when: ec2_id is defined

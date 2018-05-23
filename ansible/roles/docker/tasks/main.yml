@@ -24,7 +24,7 @@
 
 - name: Add Usernamespace for docker
   include_tasks: config-user-ns.yml
-  when: client_params.docker.userns-remap is defined
+  when: client_params.docker['userns-remap'] is defined
   tags: docker.install
 
 - name: Update configuration
