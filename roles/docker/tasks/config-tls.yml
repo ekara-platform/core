@@ -63,7 +63,7 @@
   copy:
     content: |
       extendedKeyUsage = clientAuth,serverAuth
-      subjectAltName = DNS:localhost,IP:{{ private_ip }},IP:127.0.0.1,IP:{{ public_ip }}
+      subjectAltName = DNS:localhost,IP:{{ lagoon_map.private_ip }},IP:127.0.0.1,IP:{{ lagoon_map.public_ip }}
     dest: "{{remote_ca_path}}/server-extfile.cnf"
     force: no
 - name: Create Server certificate
@@ -93,35 +93,7 @@
     group: docker
     mode: 0640
   with_items: "{{ files_to_change.files }}"
-#- name: Create client key
-#  become: yes
-#  command: openssl genrsa -out "{{remote_ca_path}}/client-priv-key.pem" 4096
-#  args:
-#    creates: "{{remote_ca_path}}/client-priv-key.pem"
-#- name: Create Client csr
-#  become: yes
-#  command: openssl req -subj "/CN=client" -new -key "{{remote_ca_path}}/client-priv-key.pem" -out "{{remote_ca_path}}/client.csr"
-#  args:
-#    creates: "{{remote_ca_path}}/client.csr"
-#- name: Create client cnf file
-#  become: yes
-#  copy:
-#    content: |
-#      extendedKeyUsage = clientAuth,serverAuth
-#    dest: "{{remote_ca_path}}/client-extfile.cnf"
-#    force: no
-#- name: Create Client certificate
-#  become: yes
-#  command: >
-#    openssl x509 -req -days 3650 
-#      -in "{{remote_ca_path}}/client.csr"
-#      -CA "{{remote_ca_path}}/ca.pem"
-#      -CAkey "{{remote_ca_path}}/ca-priv-key.pem"
-#      -CAcreateserial 
-#      -out "{{remote_ca_path}}/client-cert.pem"
-#      -extfile "{{remote_ca_path}}/client-extfile.cnf"
-#  args:
-#    creates: "{{remote_ca_path}}/client-cert.pem"
+  no_log: true
 
 - name: Create docker directories
   become: yes

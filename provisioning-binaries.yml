@@ -3,10 +3,12 @@
   pre_tasks:
   - name: Load Client configuration
     include_tasks: common/load-configuration.yml
-  - raw: lsb_release -i -s
+  - name: Check machine release
+    raw: lsb_release -i -s
     changed_when: False
     register: linux_version
-  - raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
+  - name: Add python modules
+    raw: test -e /usr/bin/python || (apt -y update && apt install -y python-minimal)
     changed_when: False
     become: yes
     when: ( linux_version.stdout | trim ) == "Ubuntu"

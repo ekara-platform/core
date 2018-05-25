@@ -1,3 +1,0 @@
-- set_fact: 
-    private_ip: "{{ec2_private_ip_address}}"
-    public_ip: "{{ec2_ip_address}}"
