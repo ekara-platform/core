@@ -1,146 +1,183 @@
 #!/usr/bin/python
-#
+
 # Copyright 2016 Red Hat | Ansible
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import absolute_import, division, print_function
 __metaclass__ = type
 
-
 ANSIBLE_METADATA = {'metadata_version': '1.1',
                     'status': ['preview'],
                     'supported_by': 'community'}
 
-
 DOCUMENTATION = '''
 ---
 module: docker_swarm
-
-short_description: Manage Swarm cluster.
-
-version_added: "2.6"
-
+short_description: Manage Swarm cluster
+version_added: "2.7"
 description:
-     - Init a new Swarm cluster
-     - Add/Remove nodes or managers to an existing cluster
+     - Create a new Swarm cluster.
+     - Add/Remove nodes or managers to an existing cluster.
 options:
     advertise_addr:
         description:
-            - Externally reachable address advertised
-                to other nodes. This can either be an address/port combination
-                in the form ``192.168.1.1:4567``, or an interface followed by a
-                port number, like ``eth0:4567``. If the port number is omitted,
-                the port number from the listen address is used. If
-                ``advertise_addr`` is not specified, it will be automatically
+            - Externally reachable address advertised to other nodes.
+            - This can either be an address/port combination
+                in the form C(192.168.1.1:4567), or an interface followed by a
+                port number, like C(eth0:4567).
+            - If the port number is omitted,
+                the port number from the listen address is used.
+            - If C(advertise_addr) is not specified, it will be automatically
                 detected when possible.
-        required: false
     listen_addr:
         description:
-            - Listen address used for inter-manager
-                communication, as well as determining the networking interface
-                used for the VXLAN Tunnel Endpoint (VTEP). This can either be
-                an address/port combination in the form ``192.168.1.1:4567``,
-                or an interface followed by a port number, like ``eth0:4567``.
-                If the port number is omitted, the default swarm listening port
+            - Listen address used for inter-manager communication.
+            - This can either be an address/port combination in the form
+                C(192.168.1.1:4567), or an interface followed by a port number,
+                like C(eth0:4567).
+            - If the port number is omitted, the default swarm listening port
                 is used.
-        default: '0.0.0.0:2377'
-        required: false
+        default: 0.0.0.0:2377
     force:
         description:
-            - Use with state C(init) to force creating a new Swarm, even if already part of one.
-            - Use with state C(leave) to Leave the swarm even if this node is a manager.
+            - Use with state C(present) to force creating a new Swarm, even if already part of one.
+            - Use with state C(absent) to Leave the swarm even if this node is a manager.
         type: bool
-        default: false
+        default: 'no'
     state:
         description:
-            - Set to C(init), to create a new cluster.
+            - Set to C(present), to create/update a new cluster.
             - Set to C(join), to join an existing cluster.
-            - Set to C(leave), to leave an existing cluster.
-            - Set to C(remove), to remove a node.
+            - Set to C(absent), to leave an existing cluster.
+            - Set to C(remove), to remove an absent node from the cluster.
+            - Set to C(inspect) to display swarm informations.
         required: true
-        default: join
+        default: present
         choices:
-          - init
+          - present
           - join
-          - leave
+          - absent
           - remove
+          - inspect
     node_id:
         description:
-            - Used with I(state=remove). Swarm id of the node to remove.
+            - Swarm id of the node to remove.
+            - Used with I(state=remove).
     join_token:
         description:
-            - Used with I(state=join). Swarm token used to join a swarm cluster.
+            - Swarm token used to join a swarm cluster.
+            - Used with I(state=join).
     remote_addrs:
         description:
-            - Used with I(state=join). Remote address of a manager to connect to.
+            - Remote address of a manager to connect to.
+            - Used with I(state=join).
     task_history_retention_limit:
         description:
             - Maximum number of tasks history stored.
+            - Docker default value is C(5).
     snapshot_interval:
-        description: Number of logs entries between snapshot.
+        description:
+            - Number of logs entries between snapshot.
+            - Docker default value is C(10000).
     keep_old_snapshots:
-        description: Number of snapshots to keep beyond the current snapshot.
+        description:
+            - Number of snapshots to keep beyond the current snapshot.
+            - Docker default value is C(0).
     log_entries_for_slow_followers:
-        description: Number of log entries to keep around to sync up slow followers after a snapshot is created.
+        description:
+            - Number of log entries to keep around to sync up slow followers after a snapshot is created.
     heartbeat_tick:
-        description: Amount of ticks (in seconds) between each heartbeat.
+        description:
+            - Amount of ticks (in seconds) between each heartbeat.
+            - Docker default value is C(1s).
     election_tick:
-        description: Amount of ticks (in seconds) needed without a leader to trigger a new election.
+        description:
+            - Amount of ticks (in seconds) needed without a leader to trigger a new election.
+            - Docker default value is C(10s).
     dispatcher_heartbeat_period:
-        description: The delay for an agent to send a heartbeat to the dispatcher.
+        description:
+            - The delay for an agent to send a heartbeat to the dispatcher.
+            - Docker default value is C(5s).
     node_cert_expiry:
-        description: Automatic expiry for nodes certificates.
+        description:
+            - Automatic expiry for nodes certificates.
+            - Docker default value is C(3months).
     name:
-        description: Swarm's name
+        description:
+            - The name of the swarm.
     labels:
-        description: User-defined key/value metadata.
+        description:
+            - User-defined key/value metadata.
     signing_ca_cert:
-        description: The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
+        description:
+            - The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
     signing_ca_key:
-        description: The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
+        description:
+            - The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
     ca_force_rotate:
-        description: An integer whose purpose is to force swarm
-                to generate a new signing CA certificate and key, if none have
-                been specified.
+        description:
+            - An integer whose purpose is to force swarm to generate a new signing CA certificate and key,
+                if none have been specified.
+            - Docker default value is C(0).
     autolock_managers:
-        description: If set, generate a key and use it to lock data stored on the managers.
+        description:
+            - If set, generate a key and use it to lock data stored on the managers.
+            - Docker default value is C(no).
         type: bool
-
-
+    rotate_worker_token:
+        description: Rotate the worker join token.
+        type: bool
+        default: 'no'
+    rotate_manager_token:
+        description: Rotate the manager join token.
+        type: bool
+        default: 'no'
 extends_documentation_fragment:
     - docker
-
 requirements:
-    - "python >= 2.7"
-    - "Docker API >= 1.35"
-
+    - python >= 2.7
+    - Docker API >= 1.35
 author:
   - Thierry Bouvet (@tbouvet)
 '''
 
 EXAMPLES = '''
 
-- name: Init a new swarm
+- name: Init a new swarm with default parameters
   docker_swarm:
-    state: "init"
-    advertise_addr: "192.168.1.1"
+    state: present
+    advertise_addr: 192.168.1.1
+
+- name: Update swarm configuration
+  docker_swarm:
+    state: present
+    election_tick: 5
 
 - name: Add nodes
   docker_swarm:
-    state: "join"
-    advertise_addr: "192.168.1.2"
-    join_token: "SWMTKN-1--xxxxx"
-    remote_addrs: ["192.168.1.1:2377"]
+    state: join
+    advertise_addr: 192.168.1.2
+    join_token: SWMTKN-1--xxxxx
+    remote_addrs: [ '192.168.1.1:2377' ]
 
-- name: Leave swarm
+- name: Leave swarm for a node
   docker_swarm:
-    state: "leave"
+    state: absent
+
+- name: Remove a swarm manager
+  docker_swarm:
+    state: absent
+    force: true
 
 - name: Remove node from swarm
   docker_swarm:
-    state: "remove"
-    node_id: "mynode"
+    state: remove
+    node_id: mynode
 
+- name: Inspect swarm
+  docker_swarm:
+    state: inspect
+  register: swarm_info
 '''
 
 RETURN = '''
@@ -158,12 +195,12 @@ swarm_facts:
                   description: Token to create a new I(worker) node
                   returned: success
                   type: str
-                  example: "SWMTKN-1--xxxxx"
+                  example: SWMTKN-1--xxxxx
               Manager:
                   description: Token to create a new I(manager) node
                   returned: success
                   type: str
-                  example: "SWMTKN-1--xxxxx"
+                  example: SWMTKN-1--xxxxx
 actions:
   description: Provides the actions done on the swarm.
   returned: when action failed.
@@ -181,6 +218,7 @@ except ImportError:
     pass
 
 from ansible.module_utils.docker_common import AnsibleDockerClient, DockerBaseClass
+from ansible.module_utils._text import to_native
 
 
 class TaskParameters(DockerBaseClass):
@@ -206,14 +244,20 @@ class TaskParameters(DockerBaseClass):
         self.external_cas = None
         self.name = None
         self.labels = None
+        self.log_driver = None
         self.signing_ca_cert = None
         self.signing_ca_key = None
         self.ca_force_rotate = None
         self.autolock_managers = None
+        self.rotate_worker_token = None
+        self.rotate_manager_token = None
 
         for key, value in client.module.params.items():
             setattr(self, key, value)
 
+        self.update_parameters(client)
+
+    def update_parameters(self, client):
         self.spec = client.create_swarm_spec(
             snapshot_interval=self.snapshot_interval,
             task_history_retention_limit=self.task_history_retention_limit,
@@ -228,7 +272,8 @@ class TaskParameters(DockerBaseClass):
             signing_ca_cert=self.signing_ca_cert,
             signing_ca_key=self.signing_ca_key,
             ca_force_rotate=self.ca_force_rotate,
-            autolock_managers=self.autolock_managers
+            autolock_managers=self.autolock_managers,
+            log_driver=self.log_driver
         )
 
 
@@ -246,44 +291,112 @@ class SwarmManager(DockerBaseClass):
 
     def __call__(self):
         choice_map = {
-            "init": self.init_swarm,
+            "present": self.init_swarm,
             "join": self.join,
-            "leave": self.leave,
-            "remove": self.remove
+            "absent": self.leave,
+            "remove": self.remove,
+            "inspect": self.inspect_swarm
         }
 
         choice_map.get(self.parameters.state)()
 
-    def fail(self, msg):
-        self.client.module.fail_json(msg=msg)
-
     def __isSwarmManager(self):
         try:
             data = self.client.inspect_swarm()
-            if data:
-                json_str = json.dumps(data, ensure_ascii=False)
-                self.swarm_info = json.loads(json_str)
-                return True
+            json_str = json.dumps(data, ensure_ascii=False)
+            self.swarm_info = json.loads(json_str)
+            return True
         except APIError:
             return False
 
+    def inspect_swarm(self):
+        try:
+            data = self.client.inspect_swarm()
+            json_str = json.dumps(data, ensure_ascii=False)
+            self.swarm_info = json.loads(json_str)
+            self.results['changed'] = False
+            self.results['swarm_facts'] = self.swarm_info
+        except APIError:
+            return
+
     def init_swarm(self):
         if self.__isSwarmManager():
-            self.results['actions'].append("This cluster is already a swarm cluster: %s" % (self.swarm_info['ID']))
-            self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
+            self.__update_swarm()
             return
 
         try:
+            if self.parameters.advertise_addr is None:
+                self.client.fail(msg="advertise_addr is required to initialize a swarm cluster.")
+
             self.client.init_swarm(
                 advertise_addr=self.parameters.advertise_addr, listen_addr=self.parameters.listen_addr,
                 force_new_cluster=self.parameters.force_new_cluster, swarm_spec=self.parameters.spec)
         except APIError as exc:
-            self.fail("Can not create a new Swarm Cluster: %s" % exc)
+            self.client.fail(msg="Can not create a new Swarm Cluster: %s" % to_native(exc))
 
         self.__isSwarmManager()
         self.results['actions'].append("New Swarm cluster created: %s" % (self.swarm_info['ID']))
         self.results['changed'] = True
         self.results['swarm_facts'] = {u'JoinTokens': self.swarm_info['JoinTokens']}
+
+    def __update_spec(self, spec):
+        if (self.parameters.node_cert_expiry is None):
+            self.parameters.node_cert_expiry = spec['CAConfig']['NodeCertExpiry']
+
+        if (self.parameters.dispatcher_heartbeat_period is None):
+            self.parameters.dispatcher_heartbeat_period = spec['Dispatcher']['HeartbeatPeriod']
+
+        if (self.parameters.snapshot_interval is None):
+            self.parameters.snapshot_interval = spec['Raft']['SnapshotInterval']
+        if (self.parameters.keep_old_snapshots is None):
+            self.parameters.keep_old_snapshots = spec['Raft']['KeepOldSnapshots']
+        if (self.parameters.heartbeat_tick is None):
+            self.parameters.heartbeat_tick = spec['Raft']['HeartbeatTick']
+        if (self.parameters.log_entries_for_slow_followers is None):
+            self.parameters.log_entries_for_slow_followers = spec['Raft']['LogEntriesForSlowFollowers']
+        if (self.parameters.election_tick is None):
+            self.parameters.election_tick = spec['Raft']['ElectionTick']
+
+        if (self.parameters.task_history_retention_limit is None):
+            self.parameters.task_history_retention_limit = spec['Orchestration']['TaskHistoryRetentionLimit']
+
+        if (self.parameters.autolock_managers is None):
+            self.parameters.autolock_managers = spec['EncryptionConfig']['AutoLockManagers']
+
+        if (self.parameters.name is None):
+            self.parameters.name = spec['Name']
+
+        if (self.parameters.labels is None):
+            self.parameters.labels = spec['Labels']
+
+        if 'LogDriver' in spec['TaskDefaults']:
+            self.parameters.log_driver = spec['TaskDefaults']['LogDriver']
+
+        self.parameters.update_parameters(self.client)
+
+        return self.parameters.spec
+
+    def __update_swarm(self):
+        try:
+            self.inspect_swarm()
+            version = self.swarm_info['Version']['Index']
+            spec = self.swarm_info['Spec']
+            new_spec = self.__update_spec(spec)
+            del spec['TaskDefaults']
+            if spec == new_spec:
+                self.results['actions'].append("No modification")
+                self.results['changed'] = False
+                return
+            self.client.update_swarm(
+                version=version, swarm_spec=new_spec, rotate_worker_token=self.parameters.rotate_worker_token,
+                rotate_manager_token=self.parameters.rotate_manager_token)
+        except APIError as exc:
+            self.client.fail(msg="Can not update a Swarm Cluster: %s" % to_native(exc))
+            return
+
+        self.inspect_swarm()
+        self.results['actions'].append("Swarm cluster updated")
+        self.results['changed'] = True
 
     def __isSwarmNode(self):
         info = self.client.info()
@@ -303,7 +416,7 @@ class SwarmManager(DockerBaseClass):
                 remote_addrs=self.parameters.remote_addrs, join_token=self.parameters.join_token, listen_addr=self.parameters.listen_addr,
                 advertise_addr=self.parameters.advertise_addr)
         except APIError as exc:
-            self.fail("Can not join the Swarm Cluster: %s" % exc)
+            self.client.fail(msg="Can not join the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("New node is added to swarm cluster")
         self.results['changed'] = True
 
@@ -314,7 +427,7 @@ class SwarmManager(DockerBaseClass):
         try:
             self.client.leave_swarm(force=self.parameters.force)
         except APIError as exc:
-            self.fail("This node can not leave the Swarm Cluster: %s" % exc)
+            self.client.fail(msg="This node can not leave the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("Node has leaved the swarm cluster")
         self.results['changed'] = True
 
@@ -337,7 +450,7 @@ class SwarmManager(DockerBaseClass):
 
     def remove(self):
         if not(self.__isSwarmManager()):
-            self.fail("This node is not a manager.")
+            self.client.fail(msg="This node is not a manager.")
 
         try:
             status_down = self.__check_node_is_down()
@@ -345,12 +458,12 @@ class SwarmManager(DockerBaseClass):
             return
 
         if not(status_down):
-            self.fail("Can not remove the node. The status node is ready and not down.")
+            self.client.fail(msg="Can not remove the node. The status node is ready and not down.")
 
         try:
             self.client.remove_node(node_id=self.parameters.node_id, force=self.parameters.force)
         except APIError as exc:
-            self.fail("Can not remove the node from the Swarm Cluster: %s" % exc)
+            self.client.fail(msg="Can not remove the node from the Swarm Cluster: %s" % to_native(exc))
         self.results['actions'].append("Node is removed from swarm cluster.")
         self.results['changed'] = True
 
@@ -358,7 +471,7 @@ class SwarmManager(DockerBaseClass):
 def main():
     argument_spec = dict(
         advertise_addr=dict(type='str'),
-        state=dict(type='str', choices=['init', 'join', 'leave', 'remove'], default='join'),
+        state=dict(type='str', choices=['present', 'join', 'absent', 'remove', 'inspect'], default='present'),
         force=dict(type='bool', default=False),
         listen_addr=dict(type='str', default='0.0.0.0:2377'),
         remote_addrs=dict(type='list'),
@@ -377,13 +490,14 @@ def main():
         signing_ca_key=dict(type='str'),
         ca_force_rotate=dict(type='int'),
         autolock_managers=dict(type='bool'),
-        node_id=dict(type='str')
+        node_id=dict(type='str'),
+        rotate_worker_token=dict(type='bool', default=False),
+        rotate_manager_token=dict(type='bool', default=False)
     )
 
     required_if = [
-        ('state', 'init', ['advertise_addr']),
         ('state', 'join', ['advertise_addr', 'remote_addrs', 'join_token']),
-        ('state', 'remove', ['node_id']),
+        ('state', 'remove', ['node_id'])
     ]
 
     client = AnsibleDockerClient(

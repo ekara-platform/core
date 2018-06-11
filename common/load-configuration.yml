@@ -1,6 +1,6 @@
 - name: Include vars of client
   include_vars:
-    dir: "{{config_dir}}/input/config"
+    dir: "{{config_dir}}/input"
     extensions: 
     - yml
     name: client_params
@@ -8,14 +8,10 @@
     proxy_env: "{{client_params.proxy_env}}"
   when: client_params.proxy_env is defined
 
-- name: Include env vars
-  include_vars:
-    dir: "{{config_dir}}/input/env"
-    extensions: 
-    - yml
-    name: client_env
-  no_log: True
-
+- name: Load paths
+  set_fact:
+    client_env:
+      provider_path: "{{ lookup('env','PROVIDER_PATH') }}"
 - name: Map Provider inventory variables
   include_vars:
     file: "{{client_env.provider_path}}/map-variables.yml"
