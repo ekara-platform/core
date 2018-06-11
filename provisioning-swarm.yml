@@ -7,7 +7,7 @@
   tasks:
   - name: Create a new Swarm Cluster
     docker_swarm:
-       state: "init"
+       state: "present"
        advertise_addr: "{{lagoon_map.private_ip}}"
        docker_host: "tcp://localhost:2376"
        cert_path: "{{client_params.docker.tlscert}}"
