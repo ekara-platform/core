@@ -1,7 +1,5 @@
 version: '3'
 
-
-
 services:
   consul:
     image: consul:1.6.2
@@ -18,7 +16,6 @@ services:
         delay: 5s
         max_attempts: 5
         window: 120s
-    hostname: "{{ '{{' }}.Node.Hostname{{ '}}' }}"
     volumes:
       - "{{ .Component.Params.consul.dataDir }}:/consul/data"
     networks:
@@ -28,4 +25,4 @@ services:
       - target: 8500
         published: 8500
         protocol: tcp
-    command: "agent -server -bootstrap -ui -client 0.0.0.0 -bind '{{ '{{' }} GetInterfaceIP \"eth0\" {{ '}}' }}'"
+    command: "agent -server -bootstrap -ui -client 0.0.0.0 -bind \"{{ `{{ GetInterfaceIP 'eth0' }}` }}\""
