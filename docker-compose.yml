@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 
 services:
   consul:
@@ -18,9 +18,6 @@ services:
         window: 120s
     volumes:
       - "{{ .Component.Params.consul.dataDir }}:/consul/data"
-    networks:
-      - consul_net
-      - traefik_net
     ports:
       - target: 8500
         published: 8500
