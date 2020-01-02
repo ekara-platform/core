@@ -22,4 +22,10 @@ services:
       - target: 8500
         published: 8500
         protocol: tcp
-    command: "agent -server -bootstrap -ui -client 0.0.0.0 -bind \"{{ `{{ GetInterfaceIP 'eth0' }}` }}\""
+    command: >
+      agent
+        -server
+        -bootstrap
+        -ui
+        -client 0.0.0.0
+        -bind {{ "{{ GetInterfaceIP 'eth0' }}" }}
