@@ -1,18 +1,16 @@
 version: '3.7'
 
-x-consul-restart:
-  &consul-restart
-  restart_policy:
-    delay: 5s
-    max_attempts: 5
-    window: 120s
+x-consul-restart-policy:
+  &consul-restart-policy
+  delay: 5s
+  max_attempts: 5
+  window: 120s
 
 x-consul-resources:
   &consul-resources
-  resources:
-    limits:
-      memory: 500M
-      cpus: '2'
+  limits:
+    memory: 500M
+    cpus: '2'
 
 services:
   consul-server-seed:
@@ -23,7 +21,7 @@ services:
         constraints:
           - node.role == manager
       resources: *consul-resources
-      restart_policy: *consul-restart
+      restart_policy: *consul-restart-policy
     volumes:
       - "{{ .Component.Params.consul.dataDir }}:/consul/data"
     ports:
@@ -44,7 +42,7 @@ services:
         constraints:
           - node.role == manager
       resources: *consul-resources
-      restart_policy: *consul-restart
+      restart_policy: *consul-restart-policy
     depends_on:
       - consul-server-seed
     volumes:
@@ -67,7 +65,7 @@ services:
         constraints:
           - node.role != manager
       resources: *consul-resources
-      restart_policy: *consul-restart
+      restart_policy: *consul-restart-policy
     depends_on:
       - consul-server
     volumes:
