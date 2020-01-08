@@ -1,31 +1,82 @@
 version: '3.7'
 
+x-consul-restart:
+  &consul-restart
+  restart_policy:
+    delay: 5s
+    max_attempts: 5
+    window: 120s
+
+x-consul-resources:
+  &consul-resources
+  resources:
+    limits:
+      memory: 500M
+      cpus: '2'
+
 services:
-  consul:
+  consul-server-seed:
+    image: consul:1.6.2
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources: *consul-resources
+      restart_policy: *consul-restart
+    volumes:
+      - "{{ .Component.Params.consul.dataDir }}:/consul/data"
+    ports:
+      - 8500:8500
+    command: >
+      agent
+        -server
+        -bootstrap-expect 3
+        -client 0.0.0.0
+        -bind '{{ "{{ GetPrivateIP }}" }}'
+        -ui
+
+  consul-server:
+    image: consul:1.6.2
+    deploy:
+      replicas: 2
+      placement:
+        constraints:
+          - node.role == manager
+      resources: *consul-resources
+      restart_policy: *consul-restart
+    depends_on:
+      - consul-server-seed
+    volumes:
+      - "{{ .Component.Params.consul.dataDir }}:/consul/data"
+    ports:
+      - 8500:8500
+    command: >
+      agent
+        -server
+        -retry-join consul-server-seed
+        -client 0.0.0.0
+        -bind '{{ "{{ GetPrivateIP }}" }}'
+        -ui
+
+  consul-client:
     image: consul:1.6.2
     deploy:
       mode: global
       placement:
         constraints:
-          - node.role == manager
-      resources:
-        limits:
-          memory: 500M
-          cpus: '2'
-      restart_policy:
-        delay: 5s
-        max_attempts: 5
-        window: 120s
+          - node.role != manager
+      resources: *consul-resources
+      restart_policy: *consul-restart
+    depends_on:
+      - consul-server
     volumes:
       - "{{ .Component.Params.consul.dataDir }}:/consul/data"
     ports:
-      - target: 8500
-        published: 8500
-        protocol: tcp
+      - 8500:8500
     command: >
       agent
-        -server
-        -bootstrap
-        -ui
+        -retry-join consul-server
+        -retry-join consul-server-seed
         -client 0.0.0.0
         -bind '{{ "{{ GetPrivateIP }}" }}'
