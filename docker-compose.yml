@@ -24,8 +24,6 @@ services:
       restart_policy: *consul-restart-policy
     volumes:
       - "{{ .Component.Params.consul.dataDir }}:/consul/data"
-    ports:
-      - 8500:8500
     command: >
       agent
         -server
@@ -70,8 +68,6 @@ services:
       - consul-server
     volumes:
       - "{{ .Component.Params.consul.dataDir }}:/consul/data"
-    ports:
-      - 8500:8500
     command: >
       agent
         -retry-join consul-server
